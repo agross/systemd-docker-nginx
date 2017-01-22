@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+set -e
+
+unit='nginx.service'
+
+script_path="$(dirname "$(readlink --canonicalize-existing "$0")")"
+
+for unit in nginx.service; do
+  file="$script_path/$unit"
+
+  printf "Linking and enabling %s\n" "$file"
+  systemctl link --force "$file"
+  systemctl enable "$file"
+done

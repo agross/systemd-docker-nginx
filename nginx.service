@@ -1,0 +1,33 @@
+# %n == The full unit name, e.g. "nginx.service".
+# %p == The unit's prefix, e.g. "nginx".
+
+[Unit]
+Description=The nginx HTTP and reverse proxy server
+Documentation=http://nginx.org/en/docs/
+Requires=docker.service
+After=docker.service
+
+[Service]
+# Report variables.
+ExecStartPre=-/usr/bin/env
+# docker stop/rm just in case the container has not been removed (e.g. the system crashed).
+ExecStartPre=-/usr/bin/docker stop "%p"
+ExecStartPre=-/usr/bin/docker rm "%p"
+ExecStart=/usr/bin/docker run \
+                          --name "%p" \
+                          --rm \
+                          --net host \
+                          --volume /etc/localtime:/etc/localtime:ro \
+                          --volume ${NGINX_CONF}:/etc/nginx:ro,z \
+                          --volume ${NGINX_HTML}:/usr/share/nginx/html:ro,z \
+                          --volume ${NGINX_LOGS}:/var/log/nginx:z \
+                          $NGINX_DOCKER_ARGS \
+                          ${NGINX_DOCKER_IMAGE}
+ExecReload=/usr/bin/docker exec "%p" nginx -s reload
+
+# Restart 2 seconds after docker run exited with an error status.
+Restart=always
+RestartSec=2s
+
+[Install]
+WantedBy=multi-user.target
